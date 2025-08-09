@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-// créer une structure pour lire dynamiquement l'input de l'utilisateur (sans avoir une taille fixe)
+
 
 
 int main () {
     printf("Enter the word you want to hash :\n\n");
 
     unsigned char *input = NULL;
-
+    
+    // créer une structure pour lire dynamiquement l'input de l'utilisateur (sans avoir une taille fixe)
     input = malloc(sizeof(char[256]));
 
     if (input == NULL) {
