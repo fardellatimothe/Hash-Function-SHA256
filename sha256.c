@@ -30,7 +30,7 @@ uint32_t H[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
 
 typedef struct {
     unsigned int nb_block;
-    unsigned int lenght;
+    unsigned int length;
     unsigned char *input;
 } padded_message;
 
@@ -43,59 +43,59 @@ padded_message* padding_process(const unsigned char* text) {
     // à la fin, on devrait avoir un multiple de 512 bit
 
     if (!text) {
-        fprintf(stderr, "Erreur: pointeur null\n");
+        fprintf(stderr, "Error: NULL input\n");
         return NULL;
     }
 
     padded_message* messagePadded = malloc(sizeof(padded_message));
     if (!messagePadded) {
-        fprintf(stderr, "Erreur: allocation structure\n");
+        fprintf(stderr, "Error memory allocation for messagePadded\n");
         return NULL;
     }
 
-    size_t lenght = strlen((const char *)text) ;
-    uint64_t lenghtBit = lenght * 8;
+    size_t length = strlen((const char*)text);
+    uint64_t lengthBit = length * 8;
 
-    // printf("Lenght of the message input = %zu, Lenght of the message input in byte = %lu\n\n", lenght, lenghtBit);
+    // printf("Length of the message input = %zu, Length of the message input in byte = %lu\n\n", length, lengthBit);
 
-    if (lenght > (__UINT64_MAX__ / 8 - 1)) {
-        fprintf(stderr, "Erreur: message trop long pour SHA-256\n");
+    if (length > (__UINT64_MAX__ / 8 - 1)) {
+        fprintf(stderr, "Error input too long for SHA-256\n");
         free(messagePadded);
         return NULL;
     }
 
-    size_t k = (448 - (lenghtBit + 1) % 512) % 512;
-    size_t totalLenght = (lenghtBit + 1 + k + 64) / 8; // Total lenght of the message input
+    size_t k = (448 - (lengthBit + 1) % 512) % 512;
+    size_t totalLength = (lengthBit + 1 + k + 64) / 8; // Total lenght of the message input
 
     // printf("k (number of 0 byte) = %zu, Total lenght of the message input = %zu\n\n", k, totalLenght);
 
-    unsigned char* paddedMessage = calloc(totalLenght, sizeof(uint8_t));
+    unsigned char* paddedMessage = calloc(totalLength, sizeof(uint8_t));
     if (!paddedMessage) {
-        fprintf(stderr, "Erreur: allocation mémoire\n");
+        fprintf(stderr, "Error memory allocation for paddedMessage\n");
         free(messagePadded);
         return NULL;
     }
 
-    memcpy(paddedMessage, text, lenght);
-    paddedMessage[lenght] = 0x80;
+    printf("Length comparaison: %zu\n",length);
+    printf("Length paddedMessage: %ld\n", totalLength);
+    printf("==========================\n");
 
-    // Big-endian (il faut voir avec little-endian)
-    for (size_t i = 0; i < 8; i = i+1) {
-        paddedMessage[totalLenght - 8 + i] = (uint8_t)(lenghtBit >> (56 - i * 8)) & 0xFF;
+
+    if (length >= totalLength) {
+        fprintf(stderr, "Error length paddedMessage.\n");
+        free(messagePadded);
+        return NULL;
+    }
+    memcpy(paddedMessage, text, length);
+    paddedMessage[length] = 0x80;
+
+    // Big Endian
+    for (size_t i = 0; i < 8; i++) {
+        paddedMessage[totalLength - 8 + i] = (uint8_t)(lengthBit >> (56 - i * 8)) & 0xFF;
     }
 
-
-    // size_t testLenght = sizeof(*paddedMessage);
-    // fprintf(stderr, "Taille du message à la fin du process de padding :");
-
-    // if ((testLenght * 8) % 512 != 0) {
-    //     fprintf(stderr, "Erreur de la taille du message après le process de padding.");
-    //     free(messagePadded);
-    //     return NULL;
-    // }
-
-    messagePadded->nb_block = totalLenght / 64;
-    messagePadded->lenght = totalLenght;
+    messagePadded->nb_block = totalLength / 64;
+    messagePadded->length = totalLength;
     messagePadded->input = paddedMessage;
 
     return messagePadded;
@@ -150,17 +150,19 @@ static int computation_process(const unsigned char* paddedBlock) {
 }
 
 unsigned char* sha256(const unsigned char* input) {
-    printf("Fonction de hachage sha256 pour %s.", input);
-
-    if (!input) return NULL;
-
-    padded_message* paddingProcessMessage = padding_process(input);
-    if (!paddingProcessMessage) return NULL;
+    if (!input) {
+        return NULL;
+    }
 
     // Réinitialiser H pour chaque appel
-    uint32_t H_local[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-                          0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
-    memcpy(H, H_local, sizeof(H));
+    uint32_t H_init[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+                         0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+    memcpy(H, H_init, sizeof(H));
+
+    padded_message* paddingProcessMessage = padding_process(input);
+    if (!paddingProcessMessage) {
+        return NULL;
+    }
 
     for (size_t i = 0; i < paddingProcessMessage->nb_block; i++) {
         if (computation_process(paddingProcessMessage->input + i * 64) != 0) {
@@ -170,8 +172,7 @@ unsigned char* sha256(const unsigned char* input) {
         }
     }
 
-    __u_char* hashValue = malloc(32);
-
+    unsigned char* hashValue = malloc(32);
     if (!hashValue) {
         free(paddingProcessMessage->input);
         free(paddingProcessMessage);
