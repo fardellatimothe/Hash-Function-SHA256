@@ -76,10 +76,6 @@ padded_message* padding_process(const unsigned char* text) {
         return NULL;
     }
 
-    printf("Length comparaison: %zu\n",length);
-    printf("Length paddedMessage: %ld\n", totalLength);
-    printf("==========================\n");
-
 
     if (length >= totalLength) {
         fprintf(stderr, "Error length paddedMessage.\n");

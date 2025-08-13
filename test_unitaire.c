@@ -35,7 +35,7 @@ int test_u_sha256() {
     free(hash);
     
     // Test 2: message plus long
-    hash = sha256((unsigned char*)"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnop");
+    hash = sha256((unsigned char*)"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq");
     if (!hash) {
         fprintf(stderr, "Erreur: sha256() a retourné NULL pour le test 2\n");
         return 0;
@@ -47,8 +47,6 @@ int test_u_sha256() {
         return 0;
     }
     if (strcmp(hashHexTest, "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1") != 0) {
-        printf("===================");
-        print_hex((const unsigned char *)hashHexTest);
         fprintf(stderr, "Erreur lors du test global numéro 2.\n");
         free(hashHexTest);
         free(hash);
@@ -58,41 +56,41 @@ int test_u_sha256() {
     free(hash);
 
     // Test 3: 1 million de a
-    // size_t lenghtMillion = 1000000;
-    // unsigned char *oneMillionA = malloc(lenghtMillion + 1);
-    // if (!oneMillionA) {
-    //     fprintf(stderr, "Erreur allocation mémoire pour le test 3\n");
-    //     return 0;
-    // }
+    size_t lengthMillion = 1000000;
+    unsigned char *oneMillionA = malloc(lengthMillion + 1);
+    if (!oneMillionA) {
+        fprintf(stderr, "Erreur allocation mémoire pour le test 3\n");
+        return 0;
+    }
 
-    // memset(oneMillionA, 'a', lenghtMillion);
-    // oneMillionA[lenghtMillion] = '\0';
+    memset(oneMillionA, 'a', lengthMillion);
+    oneMillionA[lengthMillion] = '\0';
 
-    // hash = sha256(oneMillionA);
-    // if (!hash) {
-    //     fprintf(stderr, "Erreur: sha256() a retourné NULL pour le test 3\n");
-    //     free(oneMillionA);
-    //     return 0;
-    // }
-    // hashHexTest = hash_to_hex(hash);
-    // if (!hashHexTest) {
-    //     fprintf(stderr, "Erreur: hash_to_hex() a retourné NULL pour le test 3\n");
-    //     free(hash);
-    //     free(oneMillionA);
-    //     return 0;
-    // }
+    hash = sha256(oneMillionA);
+    if (!hash) {
+        fprintf(stderr, "Erreur: sha256() a retourné NULL pour le test 3\n");
+        free(oneMillionA);
+        return 0;
+    }
+    hashHexTest = hash_to_hex(hash);
+    if (!hashHexTest) {
+        fprintf(stderr, "Erreur: hash_to_hex() a retourné NULL pour le test 3\n");
+        free(hash);
+        free(oneMillionA);
+        return 0;
+    }
     
-    // if (strcmp(hashHexTest, "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0") != 0) {
-    //     fprintf(stderr, "Erreur lors du test global numéro 3.\n");
-    //     free(hashHexTest);
-    //     free(hash);
-    //     free(oneMillionA);
-    //     return 0;
-    // }
+    if (strcmp(hashHexTest, "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0") != 0) {
+        fprintf(stderr, "Erreur lors du test global numéro 3.\n");
+        free(hashHexTest);
+        free(hash);
+        free(oneMillionA);
+        return 0;
+    }
     
-    // free(hashHexTest);
-    // free(hash);
-    // free(oneMillionA);
+    free(hashHexTest);
+    free(hash);
+    free(oneMillionA);
 
     return 1;
 }
@@ -117,11 +115,4 @@ int compare_hex_hashes(const char* hex1, const char* hex2) {
     if (!hex1 || !hex2) return -1;
     if (strlen(hex1) != 64 || strlen(hex2) != 64) return -1;
     return strcasecmp(hex1, hex2); // Case-insensitive comparison
-}
-
-void print_hex(const unsigned char *data) {
-    for (size_t i = 0; i < 32; i++) {
-        printf("%02x", data[i]);
-    }
-    printf("\n");
 }

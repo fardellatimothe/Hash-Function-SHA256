@@ -20,10 +20,10 @@
 // Ajouter le hachage pour les fichiers.
 
 int main () {
-    // // Tests Globaux
-    // if (!test_u_sha256()) {
-    //     return EXIT_FAILURE;
-    // }
+    // Tests Globaux
+    if (!test_u_sha256()) {
+        return EXIT_FAILURE;
+    }
 
     printf("Enter the word you want to hash :  "); 
 
