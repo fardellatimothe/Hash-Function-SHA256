@@ -15,16 +15,9 @@ unsigned char* extractTextFromFile(const char* path);
 // Gestion des erreurs :
 // Ajouter plus de vérifications d'erreur
 
-// Documentation :
-// Ajouter des commentaires pour expliquer les constantes
-// Documenter les fonctions avec leurs paramètres et valeurs de retour
-
 // Sécurité :
 // Fonction pour effacer toute la mémoire
 // Vérifier les débordements de buffer
-
-// Fichier :
-// Ajouter le hachage pour les fichiers.
 
 int main () {
     // Tests Globaux
@@ -32,7 +25,7 @@ int main () {
         return EXIT_FAILURE;
     }
 
-    char keymode[100000] = {0};
+    char keymode[256] = {0};
 
     printf("\nKeymodes:\n");
     printf("[Keymode 1] Hash an input text\n");
@@ -58,6 +51,8 @@ int main () {
     return 0;
 }
 
+// Hash input from keyboard
+// Returns: 0 on success, EXIT_FAILURE on error
 int hashText() {
     printf("\n==============================================\n\n");
     printf("Enter the text you want to hash : "); 
@@ -82,6 +77,14 @@ int hashText() {
         input[len - 1] = '\0';
     }
 
+    // Check buffer size before reading input
+    if (check_size(strlen((char*)input), 256) != 0) {
+        fprintf(stderr, "Input too long\n");
+        secure_wipe(input, 256);
+        free(input);
+        return EXIT_FAILURE;
+    }
+
     __u_char* hashValue = sha256(input);
 
     if (!hashValue) {
@@ -98,12 +101,17 @@ int hashText() {
     }
     printf("\n");
 
+    // Secure cleanup
+    secure_wipe(input, 256);
     free(input);
+    secure_wipe(hashValue, 32);
     free(hashValue);
 
-    return(0);
+    return 0;
 }
 
+// Hash content of a text file
+// Returns: 0 on success, EXIT_FAILURE on error
 int hashFile() {
     printf("\n==============================================\n\n");
     printf("Enter path to file : ");
@@ -129,18 +137,24 @@ int hashFile() {
 
     printf("\n\nHash Value : ");
 
-    // Afficher le hash en hexadécimal
+    // Afficher le hash en hexadecimal
     for (int i = 0; i < 32; i++) {
         printf("%02x", hashValue[i]);
     }
     printf("\n");
 
+    // Secure cleanup
+    secure_wipe(text, strlen((char*)text));
     free(text);
+    secure_wipe(hashValue, 32);
     free(hashValue);
 
     return 0;
 }
 
+// Extract text content from file
+// Parameters: path - Path to the file to read
+// Returns: Allocated buffer with file contents or NULL on error
 unsigned char* extractTextFromFile(const char* path) {
 
     if (!path) {
@@ -158,6 +172,10 @@ unsigned char* extractTextFromFile(const char* path) {
     size_t size = (size_t)fileSize(f);
 
     unsigned char* text = malloc(size + 1);
+    if (!text) {
+        perror("Error memory allocation\n");
+        return EXIT_FAILURE;
+    }
 
     int c;
     size_t i = 0;
@@ -181,6 +199,9 @@ unsigned char* extractTextFromFile(const char* path) {
 
 }
 
+// Get file size in bytes
+// Parameters: f - File pointer (must be open)
+// Returns: File size in bytes
 int fileSize(FILE *f) {
     int prev = ftell(f);
     fseek(f, 0L, SEEK_END);

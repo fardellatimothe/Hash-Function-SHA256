@@ -9,10 +9,21 @@
 char* hash_to_hex(const unsigned char* hash);
 int compare_hashes(const unsigned char* hash1, const unsigned char* hash2);
 int compare_hex_hashes(const char* hex1, const char* hex2);
-void print_hex(const unsigned char *data);
 
 
+// Main test function for SHA-256 implementation
 int test_u_sha256() {
+    // Test vectors from NIST FIPS 180-4
+    
+    // Test 1: Single block message
+    // Expected hash for "abc"
+    
+    // Test 2: Multi-block message
+    // Expected hash for "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+    
+    // Test 3: Long message test (one million 'a' characters)
+    // Tests handling of large input data
+
     // Test 1: message simple (1 bloc)
     unsigned char* hash = sha256((unsigned char*)"abc");
     if (!hash) {
@@ -95,6 +106,8 @@ int test_u_sha256() {
     return 1;
 }
 
+// Convert binary hash to hexadecimal string
+// Returns: Null-terminated string of 64 hex chars + null byte
 char* hash_to_hex(const unsigned char* hash) {
     char* hex = malloc(65); // 32 bytes = 64 chars + null terminator
     if (!hex) return NULL;
@@ -106,11 +119,15 @@ char* hash_to_hex(const unsigned char* hash) {
     return hex;
 }
 
+// Compare two binary hashes
+// Returns: 0 if equal, non-zero if different, -1 on error
 int compare_hashes(const unsigned char* hash1, const unsigned char* hash2) {
     if (!hash1 || !hash2) return -1;
     return memcmp(hash1, hash2, 32); // Compare exactly 32 bytes
 }
 
+// Compare two hexadecimal hash strings (case-insensitive)
+// Returns: 0 if equal, non-zero if different, -1 on error
 int compare_hex_hashes(const char* hex1, const char* hex2) {
     if (!hex1 || !hex2) return -1;
     if (strlen(hex1) != 64 || strlen(hex2) != 64) return -1;

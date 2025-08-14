@@ -3,17 +3,22 @@
 #include <string.h>
 #include <stdint.h>
 
-#define ROTRIGHT(a,b) (((a) >> (b)) | ((a) << (32-(b))))
+// SHA-256 rotation and logical operation macros
+#define ROTRIGHT(a,b) (((a) >> (b)) | ((a) << (32-(b)))) // Circular right rotation
 
-#define CH(x,y,z) (((x) & (y)) ^ (~(x) & (z)))
-#define MAJ(x,y,z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+// Logical functions used in SHA-256
+#define CH(x,y,z) (((x) & (y)) ^ (~(x) & (z)))      // Choice: if x then y else z
+#define MAJ(x,y,z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z))) // Majority function
 
-#define SIG0(x) (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3))
-#define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))
+// SHA-256 compression functions
+#define SIG0(x) (ROTRIGHT(x,7) ^ ROTRIGHT(x,18) ^ ((x) >> 3))  // Sigma 0 function
+#define SIG1(x) (ROTRIGHT(x,17) ^ ROTRIGHT(x,19) ^ ((x) >> 10))// Sigma 1 function
 
-#define EP0(x) (ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22))
-#define EP1(x) (ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25))
+// SHA-256 message schedule functions
+#define EP0(x) (ROTRIGHT(x,2) ^ ROTRIGHT(x,13) ^ ROTRIGHT(x,22))  // Uppercase sigma 0
+#define EP1(x) (ROTRIGHT(x,6) ^ ROTRIGHT(x,11) ^ ROTRIGHT(x,25))  // Uppercase sigma 1
 
+// Constants K for SHA-256 (first 32 bits of the fractional parts of the cube roots of the first 64 primes)
 uint32_t constK[64] = {
 	0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
 	0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -25,25 +30,26 @@ uint32_t constK[64] = {
 	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 };
 
+// Initial hash values H (first 32 bits of the fractional parts of the square roots of the first 8 primes)
 uint32_t H[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
                     0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
 
+// Structure to hold the padded message data
 typedef struct {
-    unsigned int nb_block;
-    unsigned int length;
-    unsigned char *input;
+    unsigned int nb_block;   // Number of 512-bit blocks
+    unsigned int length;     // Total length in bytes
+    unsigned char *input;    // Padded input data
 } padded_message;
+
+// Note on Endianness:
+// Big-Endian: Most significant byte first (e.g., 0x1234 stored as [12][34])
+// Little-Endian: Least significant byte first (e.g., 0x1234 stored as [34][12])
+// SHA-256 uses Big-Endian byte ordering
 
 
 padded_message* padding_process(const unsigned char* text) {
-    // printf("Début de la fonction de padding.");
-    // input doit être un multiple de 512
-    // pour cela, on met un 1 à la fin, puis on met k 0 bits tel que : l + 1 + k congru 448[512] avec l = longueur de l'input initial ("test")
-    // enfin on ajoute la longueur de l'input en binaire, mais en 64 bits (ex: 4 -> 000...0100)
-    // à la fin, on devrait avoir un multiple de 512 bit
-
     if (!text) {
-        fprintf(stderr, "Error: NULL input\n");
+        fprintf(stderr, "Error: NULL pointer input\n");
         return NULL;
     }
 
@@ -56,8 +62,6 @@ padded_message* padding_process(const unsigned char* text) {
     size_t length = strlen((const char*)text);
     uint64_t lengthBit = length * 8;
 
-    // printf("Length of the message input = %zu, Length of the message input in byte = %lu\n\n", length, lengthBit);
-
     if (length > (__UINT64_MAX__ / 8 - 1)) {
         fprintf(stderr, "Error input too long for SHA-256\n");
         free(messagePadded);
@@ -66,8 +70,6 @@ padded_message* padding_process(const unsigned char* text) {
 
     size_t k = (448 - (lengthBit + 1) % 512) % 512;
     size_t totalLength = (lengthBit + 1 + k + 64) / 8; // Total lenght of the message input
-
-    // printf("k (number of 0 byte) = %zu, Total lenght of the message input = %zu\n\n", k, totalLenght);
 
     unsigned char* paddedMessage = calloc(totalLength, sizeof(uint8_t));
     if (!paddedMessage) {
@@ -99,14 +101,20 @@ padded_message* padding_process(const unsigned char* text) {
 
 // Fonction pour la computation d'un bloc de 512 bit
 static int computation_process(const unsigned char* paddedBlock) {
+    // Message schedule array
     uint32_t w[64] = {};
 
-    // Big Endian pour l'instant
+    // Convert bytes to words (Big-Endian)
     size_t t = 0;
     for (; t < 16; t++) {
-        w[t] = (uint32_t)paddedBlock[t * 4] << 24 | (uint32_t)paddedBlock[t * 4 + 1] << 16 | (uint32_t)paddedBlock[t * 4 + 2] << 8 | (uint32_t)paddedBlock[t * 4 + 3];
+        // Convert 4 bytes to a 32-bit word using Big-Endian ordering
+        w[t] = (uint32_t)paddedBlock[t * 4] << 24 | 
+               (uint32_t)paddedBlock[t * 4 + 1] << 16 | 
+               (uint32_t)paddedBlock[t * 4 + 2] << 8 | 
+               (uint32_t)paddedBlock[t * 4 + 3];
     }
 
+    // Extend the first 16 words into the remaining 48 words
     for (; t < 64; t++) {
         w[t] = SIG1(w[t-2]) + w[t-7] + SIG0(w[t-15]) + w[t-16];
     }
