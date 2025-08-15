@@ -1,6 +1,1 @@
-Je souhaite testé
-
-le hash pour bitcoin
-et je veux devenir dev blockchain. merci à l'agirc arcco de m'acceuillir pour mon alternance !
-
-k
+Hello World !

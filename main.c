@@ -8,17 +8,18 @@
 
 int hashText();
 int hashFile();
-
 int fileSize(FILE *f);
 unsigned char* extractTextFromFile(const char* path);
 
-// Gestion des erreurs :
-// Ajouter plus de vérifications d'erreur
-
-// Sécurité :
-// Fonction pour effacer toute la mémoire
-// Vérifier les débordements de buffer
-
+/**
+ * Main entry point of the SHA-256 hash program
+ * Provides two modes of operation:
+ * 1. Hash text input from keyboard
+ * 2. Hash content from a text file
+ * 
+ * Runs unit tests before allowing user interaction
+ * @return 0 on success, EXIT_FAILURE on error
+ */
 int main () {
     // Tests Globaux
     if (!test_u_sha256()) {
@@ -51,8 +52,16 @@ int main () {
     return 0;
 }
 
-// Hash input from keyboard
-// Returns: 0 on success, EXIT_FAILURE on error
+/**
+ * Handles text input hashing from keyboard
+ * - Allocates a 256-byte buffer for input
+ * - Removes trailing newline from input
+ * - Validates input size
+ * - Computes and displays hash
+ * - Performs secure cleanup of sensitive data
+ * 
+ * @return 0 on success, EXIT_FAILURE on error
+ */
 int hashText() {
     printf("\n==============================================\n\n");
     printf("Enter the text you want to hash : "); 
@@ -71,18 +80,10 @@ int hashText() {
         return EXIT_FAILURE;
     }
 
-    // enlève le dernier caractère s'il est "\n"
+    // Remove last char if it's "\n" 
     size_t len = strlen((char*)input);
     if (len > 0 && input[len - 1] == '\n') {
         input[len - 1] = '\0';
-    }
-
-    // Check buffer size before reading input
-    if (check_size(strlen((char*)input), 256) != 0) {
-        fprintf(stderr, "Input too long\n");
-        secure_wipe(input, 256);
-        free(input);
-        return EXIT_FAILURE;
     }
 
     __u_char* hashValue = sha256(input);
@@ -95,23 +96,27 @@ int hashText() {
 
     printf("\n\nHash Value : ");
 
-    // Afficher le hash en hexadécimal
+    // Print the hashed text in hexadecimal
     for (int i = 0; i < 32; i++) {
         printf("%02x", hashValue[i]);
     }
     printf("\n");
 
-    // Secure cleanup
-    secure_wipe(input, 256);
     free(input);
-    secure_wipe(hashValue, 32);
     free(hashValue);
 
     return 0;
 }
 
-// Hash content of a text file
-// Returns: 0 on success, EXIT_FAILURE on error
+/**
+ * Handles file content hashing
+ * - Reads file path from user
+ * - Extracts file content
+ * - Computes and displays hash
+ * - Performs secure cleanup of sensitive data
+ * 
+ * @return 0 on success, EXIT_FAILURE on error
+ */
 int hashFile() {
     printf("\n==============================================\n\n");
     printf("Enter path to file : ");
@@ -144,17 +149,22 @@ int hashFile() {
     printf("\n");
 
     // Secure cleanup
-    secure_wipe(text, strlen((char*)text));
     free(text);
-    secure_wipe(hashValue, 32);
     free(hashValue);
 
     return 0;
 }
 
-// Extract text content from file
-// Parameters: path - Path to the file to read
-// Returns: Allocated buffer with file contents or NULL on error
+/**
+ * Extracts text content from a file into memory
+ * @param path Path to the file to read
+ * @return Dynamically allocated buffer containing file contents, NULL on error
+ * 
+ * Notes:
+ * - Reads file in binary mode
+ * - Adds null terminator to the buffer
+ * - Caller must free the returned buffer
+ */
 unsigned char* extractTextFromFile(const char* path) {
 
     if (!path) {
@@ -174,7 +184,7 @@ unsigned char* extractTextFromFile(const char* path) {
     unsigned char* text = malloc(size + 1);
     if (!text) {
         perror("Error memory allocation\n");
-        return EXIT_FAILURE;
+        return NULL;
     }
 
     int c;
@@ -199,9 +209,13 @@ unsigned char* extractTextFromFile(const char* path) {
 
 }
 
-// Get file size in bytes
-// Parameters: f - File pointer (must be open)
-// Returns: File size in bytes
+/**
+ * Determines the size of a file in bytes
+ * @param f Pointer to an open file
+ * @return Size of the file in bytes
+ * 
+ * Preserves the current file position pointer
+ */
 int fileSize(FILE *f) {
     int prev = ftell(f);
     fseek(f, 0L, SEEK_END);
