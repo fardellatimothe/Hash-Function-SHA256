@@ -56,7 +56,7 @@ typedef struct {
  * 2. Adds zeros until the message length ≡ 448 (mod 512)
  * 3. Appends the original message length as a 64-bit big-endian integer
  */
-padded_message* padding_process(const unsigned char* text) {
+static padded_message* padding_process(const unsigned char* text) {
     if (!text) {
         fprintf(stderr, "Error: NULL pointer input\n");
         return NULL;

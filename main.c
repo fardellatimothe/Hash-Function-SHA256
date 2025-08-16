@@ -1,15 +1,15 @@
 #include "sha256.h"
-#include "test_unitaire.h"
+#include "vector_tests.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
-int hashText();
-int hashFile();
-int fileSize(FILE *f);
-unsigned char* extractTextFromFile(const char* path);
+static int hashText();
+static int hashFile();
+static int fileSize(FILE *f);
+static unsigned char* extractTextFromFile(const char* path);
 
 /**
  * Main entry point of the SHA-256 hash program
@@ -21,8 +21,8 @@ unsigned char* extractTextFromFile(const char* path);
  * @return 0 on success, EXIT_FAILURE on error
  */
 int main () {
-    // Tests Globaux
-    if (!test_u_sha256()) {
+    // Vector Tests
+    if (!tests()) {
         return EXIT_FAILURE;
     }
 
@@ -62,7 +62,7 @@ int main () {
  * 
  * @return 0 on success, EXIT_FAILURE on error
  */
-int hashText() {
+static int hashText() {
     printf("\n==============================================\n\n");
     printf("Enter the text you want to hash : "); 
 
@@ -117,7 +117,7 @@ int hashText() {
  * 
  * @return 0 on success, EXIT_FAILURE on error
  */
-int hashFile() {
+static int hashFile() {
     printf("\n==============================================\n\n");
     printf("Enter path to file : ");
 
@@ -165,7 +165,7 @@ int hashFile() {
  * - Adds null terminator to the buffer
  * - Caller must free the returned buffer
  */
-unsigned char* extractTextFromFile(const char* path) {
+static unsigned char* extractTextFromFile(const char* path) {
 
     if (!path) {
         fprintf(stderr, "Error: NULL input\n");
@@ -216,7 +216,7 @@ unsigned char* extractTextFromFile(const char* path) {
  * 
  * Preserves the current file position pointer
  */
-int fileSize(FILE *f) {
+static int fileSize(FILE *f) {
     int prev = ftell(f);
     fseek(f, 0L, SEEK_END);
     int size = ftell(f);

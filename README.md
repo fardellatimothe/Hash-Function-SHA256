@@ -12,7 +12,6 @@ SHA-256 (Secure Hash Algorithm 256-bit) is a cryptographic hash function that ge
 - File content hashing (.txt files)
 - NIST FIPS 180-4 compliant implementation
 - Built-in test suite with standard test vectors
-- Memory-safe operations with proper cleanup
 
 ### Installation
 
